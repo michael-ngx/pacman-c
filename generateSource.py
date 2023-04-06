@@ -20,7 +20,7 @@ def map():
     f.close()
 
 def pacman():
-    with Image.open("pac.png", "r") as im:
+    with Image.open("images/pac.png", "r") as im:
         px = im.load()
     
     f = open("drawPac2.c", "w")
@@ -87,10 +87,9 @@ def pacman():
     f.write(s2)
     f.close()
 
-pacman()
 
 def graph():
-    with Image.open("smallMap.png", "r") as im:
+    with Image.open("images/smallMap.png", "r") as im:
         px = im.load()
     
     print("white is barrier")
@@ -106,7 +105,7 @@ def graph():
     for j in range(19):
         print("    {", end="")
         for i in range(22):
-            print("1" if (px[i, j]) else "0", end=(", " if (i!=21) else ""))
+            print("2" if (px[i, j]) else "0", end=(", " if (i!=21) else ""))
         print("}", end=(", \n" if (j!=18) else "\n"))
     print("}")
 
@@ -119,3 +118,4 @@ def graph():
         f.write("}" + (", \n" if (j != 18) else "\n"))
     f.write("};")
 
+graph()

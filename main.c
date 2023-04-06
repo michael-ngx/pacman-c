@@ -56,31 +56,37 @@ int dir = RIGHT;
 
 // global variable
 volatile int pixel_buffer_start; 
-int graph[19][22] = {            // maps to y, x
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0},
-    {0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
-    {0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
-    {0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-    {0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0},
-    {0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0},
-    {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0},
-    {0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0},
-    {0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0},
-    {0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0},
-    {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0},
-    {0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0},
-    {0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0},
-    {0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-    {0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
-    {0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
-    {0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+int graph[19][22] =  { // y, x
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
+    {0, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0}, 
+    {0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 0}, 
+    {0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 0}, 
+    {0, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0}, 
+    {0, 2, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0}, 
+    {0, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 0, 0, 2, 0}, 
+    {0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 0, 0, 2, 0, 2, 0, 2, 0, 0, 2, 0}, 
+    {0, 2, 2, 2, 0, 2, 2, 2, 0, 2, 0, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 0}, 
+    {0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 0, 0, 2, 0, 0, 0, 0}, 
+    {0, 2, 2, 2, 0, 2, 2, 2, 0, 2, 0, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 0}, 
+    {0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 0, 0, 2, 0, 2, 0, 2, 0, 0, 2, 0}, 
+    {0, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 0, 0, 2, 0}, 
+    {0, 2, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0}, 
+    {0, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0}, 
+    {0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 0}, 
+    {0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 0}, 
+    {0, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0}, 
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  
+};
 
 struct point
 {
     int x, y;
 };
+
+int originX = 39;
+int originY = 24;
+int worldMapRatio = 11;
+
 
 // Function declarations
 void clear_screen();
@@ -92,6 +98,8 @@ bool canMove(struct point head);
 void drawMap();
 void drawPac(int x, int y, int clear, int c);
 bool canTurn(int x, int y, int dir);
+void drawCoins();
+struct point getGrid(int x, int y);
 
 int setDir(int x, int y) {
     switch (*(int *)KEY_BASE)
@@ -119,7 +127,14 @@ int setDir(int x, int y) {
 
 bool canMove(struct point head)
 {
-    return (*(short int *)(pixel_buffer_start + (head.y << 10) + (head.x << 1)) == 0);
+    return (*(short int *)(pixel_buffer_start + (head.y << 10) + (head.x << 1)) != BLUE);
+}
+
+struct point getGrid(int x, int y) {
+    struct point g;
+    g.x = floor((x - originX) / worldMapRatio);
+    g.y = floor((y - originY) / worldMapRatio);
+    return g;
 }
 
 // Main program
@@ -129,6 +144,7 @@ int main(void)
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
 
+    int coins = 0;
     int x = 149;
     int y = 183;
     int pX;
@@ -139,19 +155,24 @@ int main(void)
     /* Before iteration */
     clear_screen();
     drawMap();
+    drawCoins();
     // drawPac(x, y, FALSE);
 
     wait_for_vsync();
 
     while (1)
     {
-        c++;
         /////////
 		int newDir = setDir(x, y);
         if (((*(int *)KEY_BASE) != 0) && (newDir != -1)) dir = newDir;
 
-        *(int *)LEDR_BASE = 0;
-        *(int *)LEDR_BASE = canTurn(x, y, dir);
+        struct point grid = getGrid(x, y);
+        if (graph[grid.y][grid.x] == 2) {
+            graph[grid.y][grid.x] = 1;
+            c++;
+            coins++;
+            *(int *)LEDR_BASE = coins;
+        }
 
         int headPos = PLAYER_RADIUS + SPEED;
         switch (dir)
@@ -211,6 +232,23 @@ int main(void)
 }
 
 // Helper functions
+
+void drawCoins() {
+    for (int i=0; i<22; i++) {
+        for (int j=0; j<19; j++) {
+            if (graph[j][i] == 2) {
+                int x = (i*worldMapRatio) + originX + 5;
+                int y = (j*worldMapRatio) + originY + 5;
+                for (int a=x-1; a<x+1; a++) {
+                    for (int b=y-1; b<y+1; b++) {
+                        plot_pixel(a, b, ORANGE);
+                    }
+                }
+            }
+        }
+    }
+}
+
 void clear_screen()
 {
     for (int x = 0; x < RESOLUTION_X; x++)
@@ -224,28 +262,24 @@ void clear_screen()
 
 bool canTurn(int x, int y, int dir)
 {
-    int originX = 39;
-    int originY = 24;
-    int worldMapRatio = 11;
     int gridX = floor((x - originX) / worldMapRatio);
     int gridY = floor((y - originY) / worldMapRatio);
     int xRail = 39 + 5 + (gridX * 11); // determining the proper turning coordinates
     int yRail = 24 + 5 + (gridY * 11);
 
-    *(int *)LEDR_BASE = 0;
     switch (dir)
     {
     case RIGHT:
-        return (graph[gridY][gridX + 1]) && (y == yRail);
+        return (graph[gridY][gridX + 1] > 0) && (y == yRail);
         break;
     case LEFT:
-        return (graph[gridY][gridX - 1]) && (y == yRail);
+        return (graph[gridY][gridX - 1] > 0) && (y == yRail);
         break;
     case DOWN:
-        return (graph[gridY + 1][gridX]) && (x == xRail);
+        return (graph[gridY + 1][gridX] > 0) && (x == xRail);
         break;
     case UP:
-        return (graph[gridY - 1][gridX]) && (x == xRail);
+        return (graph[gridY - 1][gridX] > 0) && (x == xRail);
         break;
     default:
         return false;
@@ -421,7 +455,7 @@ void drawPac(int x, int y, int clear, int c)
     {
         c1 = 0xff20;
     }
-    bool face = ((c % 10) >= 5);
+    bool face = ((c % 2) < 1);
 
     if (face || clear == 1)
     {
