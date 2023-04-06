@@ -1,4 +1,5 @@
 /* This files provides address values that exist in the system */
+#include <math.h>
 
 #define SDRAM_BASE 0xC0000000
 #define FPGA_ONCHIP_BASE 0xC8000000
@@ -36,8 +37,8 @@
 /* Constants for animation */
 #define BOX_LEN 2
 #define NUM_BOXES 8
-#define SPEED 2
-#define PLAYER_RADIUS 4
+#define SPEED 1
+#define PLAYER_RADIUS 5
 #define MOUTH_SPEED 10 // CHANGE THIS BASED ON CLOCK SPEED
 
 #define FALSE 0
@@ -54,7 +55,27 @@
 int dir = RIGHT;
 
 // global variable
-volatile int pixel_buffer_start; // Buffer
+volatile int pixel_buffer_start; 
+int graph[19][22] = {            // maps to y, x
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0},
+    {0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
+    {0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
+    {0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+    {0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0},
+    {0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0},
+    {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0},
+    {0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0},
+    {0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0},
+    {0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0},
+    {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0},
+    {0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0},
+    {0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0},
+    {0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+    {0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
+    {0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
+    {0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
 struct point
 {
@@ -70,6 +91,31 @@ void draw_box(int x, int y, short int col);
 bool canMove(struct point head);
 void drawMap();
 void drawPac(int x, int y, int clear, int c);
+bool canTurn(int x, int y, int dir);
+
+int setDir(int x, int y) {
+    switch (*(int *)KEY_BASE)
+        {
+        case 1:
+            if (canTurn(x, y, RIGHT)) return RIGHT;
+			return -1;
+            break;
+        case 2:
+            if (canTurn(x, y, LEFT)) return LEFT;
+			return -1;
+            break;
+        case 4:
+            if (canTurn(x, y, DOWN)) return DOWN;
+			return -1;
+            break;
+        case 8:
+            if (canTurn(x, y, UP)) return UP;
+			return -1;
+            break;
+        default:
+			return -1;;
+        }
+}
 
 bool canMove(struct point head)
 {
@@ -83,37 +129,13 @@ int main(void)
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
 
-    int graph[19][22] = {// maps to y, x
-                         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                         {0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0},
-                         {0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
-                         {0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
-                         {0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-                         {0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0},
-                         {0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0},
-                         {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0},
-                         {0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0},
-                         {0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0},
-                         {0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0},
-                         {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0},
-                         {0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0},
-                         {0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0},
-                         {0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-                         {0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
-                         {0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0},
-                         {0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0},
-                         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
-
     int x = 149;
     int y = 183;
     int pX;
     int pY;
-    int originX = 39;
-    int originY = 24;
     bool not_first = false;
     struct point head;
     int c = 0;
-    int worldMapRatio = 11; // each grid square is 11x11 pixels
     /* Before iteration */
     clear_screen();
     drawMap();
@@ -124,41 +146,12 @@ int main(void)
     while (1)
     {
         c++;
-        *(int *)LEDR_BASE = 0;
-        int gridX = floor((x - originX) / worldMapRatio);
-        int gridY = floor((y - originY) / worldMapRatio);
-        if (graph[gridY][gridX + 1])
-            *(int *)LEDR_BASE += 1; // LED TURNS ON IFF DIR IS A VALID PATH - RIGHT
-        if (graph[gridY][gridX - 1])
-            *(int *)LEDR_BASE += 2; // LEFT
-        if (graph[gridY + 1][gridX])
-            *(int *)LEDR_BASE += 4; // DOWN
-        if (graph[gridY - 1][gridX])
-            *(int *)LEDR_BASE += 8; // UP
         /////////
-        switch (*(int *)KEY_BASE)
-        {
-        case 1:
-            dir = RIGHT;
-            break;
-        case 2:
-            dir = LEFT;
-            break;
-        case 4:
-            dir = DOWN;
-            break;
-        case 8:
-            dir = UP;
-            break;
-        default:;
-        }
+		int newDir = setDir(x, y);
+        if (((*(int *)KEY_BASE) != 0) && (newDir != -1)) dir = newDir;
 
-        if (not_first)
-        {
-            // draw_box(pX, pY, 0);
-            drawPac(pX, pY, TRUE, c);
-            // plot_pixel(pHead.x, pHead.y, 0);
-        }
+        *(int *)LEDR_BASE = 0;
+        *(int *)LEDR_BASE = canTurn(x, y, dir);
 
         int headPos = PLAYER_RADIUS + SPEED;
         switch (dir)
@@ -166,7 +159,7 @@ int main(void)
         case RIGHT:
             head.x = x + (headPos);
             head.y = y;
-            if (x < RESOLUTION_X - 15 && canMove(head))
+            if (canMove(head))
             {
                 x += SPEED;
             }
@@ -174,7 +167,7 @@ int main(void)
         case LEFT:
             head.x = x - (headPos);
             head.y = y;
-            if (x > 15 && canMove(head))
+            if (canMove(head))
             {
                 x -= SPEED;
             }
@@ -182,7 +175,7 @@ int main(void)
         case UP:
             head.x = x;
             head.y = y - (headPos);
-            if (y > 15 && canMove(head))
+            if (canMove(head))
             {
                 y -= SPEED;
             }
@@ -190,14 +183,14 @@ int main(void)
         case DOWN:
             head.x = x;
             head.y = y + (headPos);
-            if (y < RESOLUTION_Y - 15 && canMove(head))
+            if (canMove(head))
             {
                 y += SPEED;
             }
             break;
         //////////////////////////////////////////////////////////////////////
         default:
-            if (x < RESOLUTION_X - 15 && canMove(head))
+            if (canMove(head))
             {
                 x += SPEED;
                 head.x = x + (headPos);
@@ -205,15 +198,15 @@ int main(void)
             }
         }
 
-        // draw_box(x, y, col);
+        if (not_first)
+        {
+            drawPac(pX, pY, TRUE, c);
+        }
         drawPac(x, y, FALSE, c);
-        // plot_pixel(head.x, head.y, RED);
         pX = x;
-        // pHead.x = head.x;
         pY = y;
-        // pHead.y = head.y;
         not_first = true;
-        wait_for_vsync(); // Wait
+        wait_for_vsync(); 
     }
 }
 
@@ -226,6 +219,36 @@ void clear_screen()
         {
             plot_pixel(x, y, 0);
         }
+    }
+}
+
+bool canTurn(int x, int y, int dir)
+{
+    int originX = 39;
+    int originY = 24;
+    int worldMapRatio = 11;
+    int gridX = floor((x - originX) / worldMapRatio);
+    int gridY = floor((y - originY) / worldMapRatio);
+    int xRail = 39 + 5 + (gridX * 11); // determining the proper turning coordinates
+    int yRail = 24 + 5 + (gridY * 11);
+
+    *(int *)LEDR_BASE = 0;
+    switch (dir)
+    {
+    case RIGHT:
+        return (graph[gridY][gridX + 1]) && (y == yRail);
+        break;
+    case LEFT:
+        return (graph[gridY][gridX - 1]) && (y == yRail);
+        break;
+    case DOWN:
+        return (graph[gridY + 1][gridX]) && (x == xRail);
+        break;
+    case UP:
+        return (graph[gridY - 1][gridX]) && (x == xRail);
+        break;
+    default:
+        return false;
     }
 }
 
