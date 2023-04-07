@@ -169,7 +169,6 @@ int main(void)
         struct point grid = getGrid(x, y);
         if (graph[grid.y][grid.x] == 2) {
             graph[grid.y][grid.x] = 1;
-            c++;
             coins++;
             *(int *)LEDR_BASE = coins;
         }
@@ -183,7 +182,8 @@ int main(void)
             if (canMove(head))
             {
                 x += SPEED;
-            }
+                c++;
+            } else {c=0;}
             break;
         case LEFT:
             head.x = x - (headPos);
@@ -191,7 +191,8 @@ int main(void)
             if (canMove(head))
             {
                 x -= SPEED;
-            }
+                c++;
+            } else {c=0;}
             break;
         case UP:
             head.x = x;
@@ -199,7 +200,8 @@ int main(void)
             if (canMove(head))
             {
                 y -= SPEED;
-            }
+                c++;
+            } else {c=0;}
             break;
         case DOWN:
             head.x = x;
@@ -207,7 +209,8 @@ int main(void)
             if (canMove(head))
             {
                 y += SPEED;
-            }
+                c++;
+            } else {c=0;}
             break;
         //////////////////////////////////////////////////////////////////////
         default:
@@ -455,7 +458,7 @@ void drawPac(int x, int y, int clear, int c)
     {
         c1 = 0xff20;
     }
-    bool face = ((c % 2) < 1);
+    bool face = ((c % 5) < 2);
 
     if (face || clear == 1)
     {
