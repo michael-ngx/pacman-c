@@ -353,6 +353,7 @@ void clear_screen()
 
 bool canTurn(int x, int y, int dir)
 {
+
     struct point grid = getGrid(x, y);
     int xRail = 39 + 5 + (grid.x * 11); // determining the proper turning coordinates
     int yRail = 24 + 5 + (grid.y * 11);
