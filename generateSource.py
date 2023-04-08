@@ -23,70 +23,69 @@ def pacman():
     with Image.open("images/pac.png", "r") as im:
         px = im.load()
     
-    f = open("drawPac2.c", "w")
+    f = open("py Generated Source/drawPac2.c", "w")
     f.write("void drawPacOpen(int x, int y, short int c1) {\n")
-    f.write("    int open [50] = {")
+    f.write("    int open [9][9] = {\n")
 
     c = 0
-    pxs = []
     for i in range(9):
+        pxs = []
+        f.write("    {")
         for j in range(9):
-            if (px[i, j] != 0):
-                pxs.append(f"((x+({i-4}) << 10) + (y-({j-4}) << 1))")
-                c += 1
-    
-    f.write(", ".join(pxs))
-    f.write("\n    };\n")
-    s = """    for (int n = 0; n < 50; n++) {
-        *(short int *)(pixel_buffer_start + open[n]) = c1;
-    }\n"""
-    f.write(s)
-    f.write("}\n")
+            if (px[j, i] != 0):
+                pxs.append("1")
+            else: 
+                pxs.append("0")
 
-    with Image.open("pacClosed.png", "r") as im2:
-        px2 = im2.load()
-    c = 0
-    f.write("void drawPacClosed (int x, int y, short int c1) {\n")
-    f.write("    int closed[68] = {")
-    pxs = []
-    for i in range(9):
-        for j in range(9):
-            if (px2[i, j] != 0):
-                pxs.append(f"((x+({i-4}) << 10) + (y-({j-4}) << 1))")
-                c+=1
-                # print(f"(x+({i-4}) << 10) + (y-({j-4}) << 1)")
-    f.write(", ".join(pxs))
-    f.write("\n    };\n")
-    s = """    for (int n = 0; n < 68; n++) {
-        *(short int *)(pixel_buffer_start + closed[n]) = c1;
-    }\n"""
-    f.write(s)
-    f.write("}\n")
-    s2 = """void drawPac(int x, int y, int clear, int c)
-{
-    short int c1;
-    if (clear == 1)
-    {
-        c1 = BLACK;
-    }
-    else
-    {
-        c1 = 0xff20;
-    }
-    bool face = ((c % 10) >= 5);
-
-    if (face || clear == 1)
-    {
-        drawPacClosed(x, y, c1);
-    }
-    else
-    {
-        drawPacOpen(x, y, c1);
-    }
-}"""
-    f.write(s2)
+        f.write(", ".join(pxs))
+        f.write("},\n")
+    f.write("    }\n}")
     f.close()
 
+#     with Image.open("pacClosed.png", "r") as im2:
+#         px2 = im2.load()
+#     c = 0
+#     f.write("void drawPacClosed (int x, int y, short int c1) {\n")
+#     f.write("    int closed[68] = {")
+#     pxs = []
+#     for i in range(9):
+#         for j in range(9):
+#             if (px2[i, j] != 0):
+#                 pxs.append(f"((x+({i-4}) << 10) + (y-({j-4}) << 1))")
+#                 c+=1
+#                 # print(f"(x+({i-4}) << 10) + (y-({j-4}) << 1)")
+#     f.write(", ".join(pxs))
+#     f.write("\n    };\n")
+#     s = """    for (int n = 0; n < 68; n++) {
+#         *(short int *)(pixel_buffer_start + closed[n]) = c1;
+#     }\n"""
+#     f.write(s)
+#     f.write("}\n")
+#     s2 = """void drawPac(int x, int y, int clear, int c)
+# {
+#     short int c1;
+#     if (clear == 1)
+#     {
+#         c1 = BLACK;
+#     }
+#     else
+#     {
+#         c1 = 0xff20;
+#     }
+#     bool face = ((c % 10) >= 5);
+
+#     if (face || clear == 1)
+#     {
+#         drawPacClosed(x, y, c1);
+#     }
+#     else
+#     {
+#         drawPacOpen(x, y, c1);
+#     }
+# }"""
+#     f.write(s2)
+#     f.close()
+pacman()
 
 def graph():
     with Image.open("images/smallMap.png", "r") as im:
@@ -117,5 +116,3 @@ def graph():
             f.write(str(px[i, j]) + (", " if (i != 21) else ""))
         f.write("}" + (", \n" if (j != 18) else "\n"))
     f.write("};")
-
-graph()

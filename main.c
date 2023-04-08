@@ -261,6 +261,7 @@ void clear_screen()
 
 bool canTurn(int x, int y, int dir)
 {
+
     struct point grid = getGrid(x, y);
     int xRail = 39 + 5 + (grid.x * 11); // determining the proper turning coordinates
     int yRail = 24 + 5 + (grid.y * 11);
@@ -268,16 +269,16 @@ bool canTurn(int x, int y, int dir)
     switch (dir)
     {
     case RIGHT:
-        return (graph[gridY][gridX + 1] > 0) && (y == yRail);
+        return (graph[grid.y][grid.x + 1] > 0) && (y == yRail);
         break;
     case LEFT:
-        return (graph[gridY][gridX - 1] > 0) && (y == yRail);
+        return (graph[grid.y][grid.x - 1] > 0) && (y == yRail);
         break;
     case DOWN:
-        return (graph[gridY + 1][gridX] > 0) && (x == xRail);
+        return (graph[grid.y + 1][grid.x] > 0) && (x == xRail);
         break;
     case UP:
-        return (graph[gridY - 1][gridX] > 0) && (x == xRail);
+        return (graph[grid.y - 1][grid.x] > 0) && (x == xRail);
         break;
     default:
         return false;
