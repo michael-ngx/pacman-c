@@ -240,13 +240,9 @@ void drawCoins() {
     for (int i=0; i<22; i++) {
         for (int j=0; j<19; j++) {
             if (graph[j][i] == 2) {
-                int x = (i*worldMapRatio) + originX + 5;
-                int y = (j*worldMapRatio) + originY + 5;
-                for (int a=x-1; a<x+1; a++) {
-                    for (int b=y-1; b<y+1; b++) {
-                        plot_pixel(a, b, ORANGE);
-                    }
-                }
+                int x = (i*worldMapRatio) + originX + 6;
+                int y = (j*worldMapRatio) + originY + 6;
+                draw_box(x, y, ORANGE);
             }
         }
     }
@@ -291,9 +287,9 @@ bool canTurn(int x, int y, int dir)
 
 void draw_box(int x, int y, short int col)
 {
-    for (int i = x - 10; i < x + 10; i++)
+    for (int i = x - 1; i < x + 1; i++)
     {
-        for (int j = y - 10; j < y + 10; j++)
+        for (int j = y - 1; j < y + 1; j++)
         {
             plot_pixel(i, j, col);
         }
