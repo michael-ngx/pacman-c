@@ -261,10 +261,9 @@ void clear_screen()
 
 bool canTurn(int x, int y, int dir)
 {
-    int gridX = floor((x - originX) / worldMapRatio);
-    int gridY = floor((y - originY) / worldMapRatio);
-    int xRail = 39 + 5 + (gridX * 11); // determining the proper turning coordinates
-    int yRail = 24 + 5 + (gridY * 11);
+    struct point grid = getGrid(x, y);
+    int xRail = 39 + 5 + (grid.x * 11); // determining the proper turning coordinates
+    int yRail = 24 + 5 + (grid.y * 11);
 
     switch (dir)
     {
