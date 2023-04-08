@@ -40,6 +40,8 @@
 #define SPEED 1
 #define PLAYER_RADIUS 5
 #define MOUTH_SPEED 10 // CHANGE THIS BASED ON CLOCK SPEED
+#define SPEED_G 1                                         
+#define GHOST_RADIUS 5          
 
 #define FALSE 0
 #define TRUE 1
@@ -87,8 +89,8 @@ int originX = 39;
 int originY = 24;
 int worldMapRatio = 11;
 
-
 // Function declarations
+bool point_equal(const struct point p1, const struct point p2);
 void clear_screen();
 void swap(int *a, int *b);
 void plot_pixel(int x, int y, short int line_color);
@@ -97,6 +99,7 @@ void draw_box(int x, int y, short int col);
 bool canMove(struct point head);
 void drawMap();
 void drawPac(int x, int y, int clear, int c);
+void drawGhost(int x, int y, int clear, int c);
 bool canTurn(int x, int y, int dir);
 void drawCoins();
 struct point getGrid(int x, int y);
@@ -125,6 +128,35 @@ int setDir(int x, int y) {
         }
 }
 
+// Return the closest_head point of the 4 points to the origin point
+// TODO: The point returned is guaranteed to allow moving towards (check collision)
+struct point find_closest_head(struct point origin, struct point a, struct point b, struct point c, struct point d)
+{
+    int a_distance = sqrt((origin.x - a.x)*(origin.x - a.x) + (origin.y - a.y)*(origin.y - a.y));
+    int b_distance = sqrt((origin.x - b.x)*(origin.x - b.x) + (origin.y - b.y)*(origin.y - b.y));
+    int c_distance = sqrt((origin.x - c.x)*(origin.x - c.x) + (origin.y - c.y)*(origin.y - c.y));
+    int d_distance = sqrt((origin.x - d.x)*(origin.x - d.x) + (origin.y - d.y)*(origin.y - d.y));
+
+    struct point min_point = a;
+    int min_distance = a_distance;
+    if (b_distance < min_distance) 
+    {
+        min_distance = b_distance;
+        min_point = b;
+    }
+    if (c_distance < min_distance)
+    {
+        min_distance = c_distance;
+        min_point = c;
+    }
+    if (d_distance < min_distance)
+    {
+        min_distance = d_distance;
+        min_point = d;
+    }
+    return min_point;
+}
+
 bool canMove(struct point head)
 {
     return (*(short int *)(pixel_buffer_start + (head.y << 10) + (head.x << 1)) != BLUE);
@@ -143,26 +175,51 @@ int main(void)
     volatile int *pixel_ctrl_ptr = (int *)0xFF203020;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
-
+    
+    /*************************************
+    * PLAYER DATA
+    **************************************/
+    // Coins collected
     int coins = 0;
+    // Current player location, in pixels
     int x = 149;
     int y = 183;
-    int pX;
-    int pY;
-    bool not_first = false;
+    // Previous player location, in pixels
+    int pX = x;
+    int pY = y;
+    // Pixel for head of next movement, changes based on direction
     struct point head;
+    // For player close/open mouth
     int c = 0;
+    /**************************************
+    * GHOST DATA
+    ***************************************/
+    int x_1 = 140;
+    int y_1 = 183;
+    int pX_1;
+    int pY_1;
+    struct point head_1;
+
+    /**************************************
+    * GAME DATA
+    ***************************************/
+    // Boolean to check for first drawing
+    bool not_first = false;
     /* Before iteration */
     clear_screen();
     drawMap();
     drawCoins();
     // drawPac(x, y, FALSE);
-
     wait_for_vsync();
 
+    /*********************************************************************************************************************
+    * GAME LOOP
+    **********************************************************************************************************************/
     while (1)
     {
-        /////////
+        /**************************************
+        * PLAYER
+        ***************************************/
 		int newDir = setDir(x, y);
         if (((*(int *)KEY_BASE) != 0) && (newDir != -1)) dir = newDir;
 
@@ -172,7 +229,8 @@ int main(void)
             coins++;
             *(int *)LEDR_BASE = coins;
         }
-
+        
+        // Number of pixels to be incremented if moved in chosen direction
         int headPos = PLAYER_RADIUS + SPEED;
         switch (dir)
         {
@@ -229,12 +287,46 @@ int main(void)
         drawPac(x, y, FALSE, c);
         pX = x;
         pY = y;
+
+        /**************************************
+        * GHOST 1
+        ***************************************/
+        struct point prev_pac_point = {pX, pY};
+        int headPos_1 = GHOST_RADIUS + SPEED_G;
+        struct point head_left = {x_1 - headPos_1, y_1};
+        struct point head_right = {x_1 + headPos_1, y_1};
+        struct point head_up = {x_1, y_1 + headPos_1};
+        struct point head_down = {x_1, y_1 - headPos_1};
+        // Move ghost in direction that chases player
+        struct point closest_head = find_closest_head(prev_pac_point, head_left, head_right, head_up, head_down);
+        if (point_equal(closest_head, head_left)) 
+        {
+            
+        } else if (point_equal(closest_head, head_right))
+        {
+            
+        } else if (point_equal(closest_head, head_up))
+        {
+            
+        } else if (point_equal(closest_head, head_down))
+        {
+            
+        }
+
+       /**************************************
+        * ALL
+        ***************************************/
         not_first = true;
         wait_for_vsync(); 
     }
 }
 
 // Helper functions
+
+bool point_equal(const struct point p1, const struct point p2)
+{
+    return (p1.x == p2.x) && (p1.y == p2.y);
+}
 
 void drawCoins() {
     for (int i=0; i<22; i++) {
@@ -268,16 +360,16 @@ bool canTurn(int x, int y, int dir)
     switch (dir)
     {
     case RIGHT:
-        return (graph[gridY][gridX + 1] > 0) && (y == yRail);
+        return (graph[grid.y][grid.x + 1] > 0) && (y == yRail);
         break;
     case LEFT:
-        return (graph[gridY][gridX - 1] > 0) && (y == yRail);
+        return (graph[grid.y][grid.x - 1] > 0) && (y == yRail);
         break;
     case DOWN:
-        return (graph[gridY + 1][gridX] > 0) && (x == xRail);
+        return (graph[grid.y + 1][grid.x] > 0) && (x == xRail);
         break;
     case UP:
-        return (graph[gridY - 1][gridX] > 0) && (x == xRail);
+        return (graph[grid.y - 1][grid.x] > 0) && (x == xRail);
         break;
     default:
         return false;
