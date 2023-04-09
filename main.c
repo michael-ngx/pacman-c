@@ -189,7 +189,7 @@ int main(void)
     /* Before iteration */
     clear_screen();
     drawMap();
-    // drawCoins();
+    drawCoins();
     // drawPac(x, y, FALSE);
     wait_for_vsync();
 
