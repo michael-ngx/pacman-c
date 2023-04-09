@@ -110,6 +110,18 @@ int closed [9][9] = {
         {0, 0, 1, 1, 1, 1, 1, 0, 0},
 };
 
+int ghost [9][9] = {
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 3, 3, 3, 3, 3, 0, 0},
+        {0, 3, 3, 5, 3, 3, 5, 3, 0},
+        {0, 3, 5, 5, 1, 5, 5, 1, 0},
+        {0, 3, 4, 5, 2, 4, 5, 2, 0},
+        {0, 3, 3, 3, 3, 3, 3, 3, 0},
+        {0, 3, 3, 3, 3, 3, 3, 3, 0},
+        {0, 3, 3, 3, 0, 3, 3, 3, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+};
+
 typedef struct Point
 {
     int x, y;
@@ -133,10 +145,11 @@ bool canMove(Point head);
 bool canTurn(int x, int y, int dir);
 
 // BFS algorithm
-
 bool grid_equal(const Grid p1, const Grid p2);
 bool isValid(int row, int col);
 Grid* BFS (Grid start, Grid end);
+Point* getPixelPath (Grid* path_grid, int ghost_number);
+int count_pixel_path[] = {0, 0, 0};
 
 // Drawing
 void clear_screen();
@@ -145,7 +158,7 @@ void wait_for_vsync();
 void draw_box(int x, int y, short int col);
 void drawMap();
 void drawPac(int x, int y, int clear, int c);
-void drawGhost(int x, int y, int clear, int c);
+void drawGhost (int x, int y, bool clear, int ghost_number);
 void drawCoins();
 void rotatePac();
 void video_text(int x, int y, char * text_ptr);
@@ -180,11 +193,12 @@ int main(void)
     /**************************************
     * GHOST DATA
     ***************************************/
-    int x_1 = 100;
-    int y_1 = 72;
-    // int pX_1;
-    // int pY_1;
-    // Point head_1;
+    bool not_first_ghost[] = {false, false, false};
+    int x_ghost[] = {78, 100, 166};
+    int y_ghost[] = {72, 72, 72};
+    
+    Grid* path_grid[3];
+    Point* path_pixel[3];
 
     /**************************************
     * GAME DATA
@@ -276,28 +290,50 @@ int main(void)
         drawPac(x, y, FALSE, c);
         pX = x;
         pY = y;
+        not_first = true;
 
         /**************************************
-        * GHOST 1
+        * GHOSTS
         ***************************************/
-        Grid start = getGrid(x_1, y_1);
-        Grid dest = getGrid(pX, pY);
-        Grid* path = BFS(start, dest);
-
-        // Draws the ghost
-        for (int i = 0; i < ROW * COL; i++)
+        bool reseted[] = {false, false, false};
+        for (int i = 0; i < 3; i++)
         {
-            if (path[i].row == -1 && path[i].col == -1) break;
-            int x = (path[i].col * worldMapRatio) + originX + 6;
-            int y = (path[i].row * worldMapRatio) + originY + 6;
-            plot_pixel(x, y, 0xff00);
+            if (count_pixel_path[i] == 0)
+            {
+                if (not_first_ghost[i])
+                {
+                    drawGhost (path_pixel[i][0].x, path_pixel[i][0].y, false, i);
+                    free(path_grid[i]);
+                    free(path_pixel[i]);
+                }
+                not_first_ghost[i] = true;
+                reseted[i] = true;
+                Grid start = getGrid(x_ghost[i], y_ghost[i]);
+                Grid dest = getGrid(pX, pY);
+                path_grid[i] = BFS(start, dest);
+                path_pixel[i] = getPixelPath(path_grid[i], i);
+            }
+
+            // Let ghost travel on path_pixel
+            if (!reseted[i])
+                {drawGhost (path_pixel[i][count_pixel_path[i] + 1].x, path_pixel[i][count_pixel_path[i] + 1].y, true, i);}
+            drawGhost (path_pixel[i][count_pixel_path[i]].x, path_pixel[i][count_pixel_path[i]].y, false, i);
+            count_pixel_path[i]--;
+            x_ghost[i] = path_pixel[i][count_pixel_path[i]].x;
+            y_ghost[i] = path_pixel[i][count_pixel_path[i]].y;
+            
+            
+            if (abs(x - x_ghost[i]) <= PLAYER_RADIUS && abs(y - y_ghost[i]) <= PLAYER_RADIUS)
+            {
+                printf("LOSE");
+                return 0;
+            }
         }
-        free(path);
-        // plot_pixel(x_1, y_1, 0xff00);
-       /**************************************
-        * ALL
+        
+        /**************************************
+        * ALL OBJECTS
         ***************************************/
-        not_first = true;
+        drawCoins();
         wait_for_vsync(); 
     }
 }
@@ -465,13 +501,15 @@ Grid* BFS (Grid start, Grid dest)
         int row = curr.row;
         int col = curr.col;
 
+        // Found path
         if (grid_equal(curr, dest))
         {
             // Trace path
             int top = -1;
             int row_track = dest.row;
             int col_track = dest.col;
-                    
+            // Add the destination cell to the path
+            path[++top] = dest;
             // Backtrack from the destination to the source using the parent array
             while (!(parent[row_track][col_track].row == row_track && parent[row_track][col_track].col == col_track)) {
                 path[++top] = parent[row_track][col_track];
@@ -480,7 +518,7 @@ Grid* BFS (Grid start, Grid dest)
                 col_track = parent[row_temp][col_track].col;
             }
             // Add the source cell to the path
-            path[++top] = parent[row_track][col_track];
+            path[++top] = start;
             return path;
         }
 
@@ -522,6 +560,67 @@ Grid* BFS (Grid start, Grid dest)
     return path;
 }
 
+Point* getPixelPath (Grid* path_grid, int ghost_number)
+{
+    // Path to be returned
+    Point* path_pixel = malloc(ROW * COL * worldMapRatio * sizeof(Point));
+    // Initialize return path
+    for (int i = 0; i < ROW * COL * worldMapRatio; i++)
+    {
+        path_pixel[i] = (Point) {-1, -1};
+    }
+    count_pixel_path[ghost_number] = 0;
+    for (int grid = 0; grid < ROW * COL - 1; grid++)
+    {
+        if (path_grid[grid + 1].row == -1 && path_grid[grid + 1].col == -1) 
+        {
+            int x = (path_grid[grid].col * worldMapRatio) + originX + 6;
+            int y = (path_grid[grid].row * worldMapRatio) + originY + 6;
+            path_pixel[count_pixel_path[ghost_number]] = (Point) {x, y};
+            break;
+        }
+        // xy of grid mid point
+        int curr_x = (path_grid[grid].col * worldMapRatio) + originX + 6;
+        int curr_y = (path_grid[grid].row * worldMapRatio) + originY + 6;
+        int next_x = (path_grid[grid + 1].col * worldMapRatio) + originX + 6;
+        int next_y = (path_grid[grid + 1].row * worldMapRatio) + originY + 6;
+        
+        if (next_x > curr_x)
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                int x = (path_grid[grid].col * worldMapRatio) + originX + 6 + i;
+                int y = (path_grid[grid].row * worldMapRatio) + originY + 6;
+                path_pixel[count_pixel_path[ghost_number]++] = (Point) {x, y};
+            }
+        } else if (next_x < curr_x)
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                int x = (path_grid[grid].col * worldMapRatio) + originX + 6 - i;
+                int y = (path_grid[grid].row * worldMapRatio) + originY + 6;
+                path_pixel[count_pixel_path[ghost_number]++] = (Point) {x, y};
+            }
+        } else if (next_y < curr_y)
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                int x = (path_grid[grid].col * worldMapRatio) + originX + 6;
+                int y = (path_grid[grid].row * worldMapRatio) + originY + 6 - i;
+                path_pixel[count_pixel_path[ghost_number]++] = (Point) {x, y};
+            }
+        } else if (next_y > curr_y)
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                int x = (path_grid[grid].col * worldMapRatio) + originX + 6;
+                int y = (path_grid[grid].row * worldMapRatio) + originY + 6 + i;
+                path_pixel[count_pixel_path[ghost_number]++] = (Point) {x, y};
+            }
+        }
+    }
+    return path_pixel;
+}
 
 /**************************************
 * DRAWING
@@ -624,6 +723,35 @@ void drawPac(int x, int y, int clear, int c)
 
     if (face || clear == 1) {drawPacClosed(x, y, c1); }
     else {drawPacOpen(x, y, c1); }
+}
+
+void drawGhost (int x, int y, bool clear, int ghost_number)
+{
+    short int c1;
+    for (int i=0; i<9; i++) {
+        for (int j=0; j<9; j++) {
+            if (!clear)
+            {
+                if (ghost[i][j] != 0){
+                    switch (ghost[i][j]) {
+                        case 1: c1 = BLUE; break;
+                        case 2: c1 = MAGENTA; break;
+                        case 3: if (ghost_number == 0) c1 = RED; 
+                                else if (ghost_number == 1) c1 = CYAN; 
+                                else if (ghost_number == 2) c1 = YELLOW; 
+                                break;
+                        case 4: c1 = PINK; break;
+                        case 5: c1 = WHITE; break;
+                        default: ;
+                    }
+                    plot_pixel(j+x-4, i+y-4, c1);
+                }
+            } else
+            {
+                plot_pixel(j+x-4, i+y-4, BLACK);
+            }
+        }
+    }
 }
 
 void drawMap()
