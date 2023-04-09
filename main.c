@@ -40,6 +40,8 @@
 #define SPEED 1
 #define PLAYER_RADIUS 5
 #define MOUTH_SPEED 10 // CHANGE THIS BASED ON CLOCK SPEED
+#define SPEED_G 1                                         
+#define GHOST_RADIUS 5          
 
 #define FALSE 0
 #define TRUE 1
@@ -54,7 +56,9 @@
 #define LEFT 3
 int dir = RIGHT;
 
-// global variable
+/*********************************************************************************************************************
+* GLOBAL VARIABLES
+**********************************************************************************************************************/
 volatile int pixel_buffer_start; 
 int graph[19][22] =  { // y, x
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
@@ -78,101 +82,134 @@ int graph[19][22] =  { // y, x
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  
 };
 
-struct point
+typedef struct Point
 {
     int x, y;
-};
+} Point;
 
 int originX = 39;
 int originY = 24;
 int worldMapRatio = 11;
 
-
 // Function declarations
+// Game Logic
+Point getGrid(int x, int y);
+int setDir(int x, int y);
+bool canMove(Point head);
+bool canTurn(int x, int y, int dir);
+Point getGrid(int x, int y);
+bool point_equal(const Point p1, const Point p2);
+
+// A* algorithm
+typedef struct Node
+{
+    int grid_x;
+    int grid_y;
+    int f;
+    int g;
+    int h;
+    // Parent node in find_path
+    struct Node* parent;
+    // Next node in pq (not related to path)
+    struct Node* next;
+} Node;
+
+typedef struct PriorityQueue
+{
+    Node *head;
+    Node *tail;
+    // Number of nodes added
+    int size;
+} PriorityQueue;
+
+PriorityQueue* create_priority_queue();
+void push(PriorityQueue *pq, int grid_x, int grid_y, int f, int g, int h);
+Node* pop(PriorityQueue* pq);
+bool is_empty(PriorityQueue* pq);
+void clear_priority_queue(PriorityQueue* pq);
+
+// Drawing
 void clear_screen();
-void swap(int *a, int *b);
 void plot_pixel(int x, int y, short int line_color);
 void wait_for_vsync();
 void draw_box(int x, int y, short int col);
-bool canMove(struct point head);
 void drawMap();
 void drawPac(int x, int y, int clear, int c);
-bool canTurn(int x, int y, int dir);
+void drawGhost(int x, int y, int clear, int c);
 void drawCoins();
-struct point getGrid(int x, int y);
 
-int setDir(int x, int y) {
-    switch (*(int *)KEY_BASE)
-        {
-        case 1:
-            if (canTurn(x, y, RIGHT)) return RIGHT;
-			return -1;
-            break;
-        case 2:
-            if (canTurn(x, y, LEFT)) return LEFT;
-			return -1;
-            break;
-        case 4:
-            if (canTurn(x, y, DOWN)) return DOWN;
-			return -1;
-            break;
-        case 8:
-            if (canTurn(x, y, UP)) return UP;
-			return -1;
-            break;
-        default:
-			return -1;;
-        }
-}
 
-bool canMove(struct point head)
+// Return the closest_head point of the 4 points to the origin point
+// The point returned is guaranteed to avoid collision
+Point find_closest_head(Point start, Point dest)
 {
-    return (*(short int *)(pixel_buffer_start + (head.y << 10) + (head.x << 1)) != BLUE);
+
 }
 
-struct point getGrid(int x, int y) {
-    struct point g;
-    g.x = floor((x - originX) / worldMapRatio);
-    g.y = floor((y - originY) / worldMapRatio);
-    return g;
-}
-
-// Main program
+/*********************************************************************************************************************
+* MAIN PROGRAM
+**********************************************************************************************************************/
 int main(void)
 {
     volatile int *pixel_ctrl_ptr = (int *)0xFF203020;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
-
+    
+    /*************************************
+    * PLAYER DATA
+    **************************************/
+    // Coins collected
     int coins = 0;
+    // Current player location, in pixels
     int x = 149;
     int y = 183;
-    int pX;
-    int pY;
-    bool not_first = false;
-    struct point head;
+    // Previous player location, in pixels
+    int pX = x;
+    int pY = y;
+    // Pixel for head of next movement, changes based on direction
+    Point head;
+    // For player close/open mouth
     int c = 0;
+    /**************************************
+    * GHOST DATA
+    ***************************************/
+    int x_1 = 100;
+    int y_1 = 72;
+    int pX_1;
+    int pY_1;
+    Point head_1;
+
+    /**************************************
+    * GAME DATA
+    ***************************************/
+    // Boolean to check for first drawing
+    bool not_first = false;
     /* Before iteration */
     clear_screen();
     drawMap();
     drawCoins();
     // drawPac(x, y, FALSE);
-
     wait_for_vsync();
 
+    /*******************************************************************************
+    * GAME LOOP
+    ********************************************************************************/
     while (1)
     {
-        /////////
+        /**************************************
+        * PLAYER
+        ***************************************/
 		int newDir = setDir(x, y);
         if (((*(int *)KEY_BASE) != 0) && (newDir != -1)) dir = newDir;
 
-        struct point grid = getGrid(x, y);
+        Point grid = getGrid(x, y);
         if (graph[grid.y][grid.x] == 2) {
             graph[grid.y][grid.x] = 1;
             coins++;
             *(int *)LEDR_BASE = coins;
         }
-
+        
+        // Number of pixels to be incremented if moved in chosen direction
         int headPos = PLAYER_RADIUS + SPEED;
         switch (dir)
         {
@@ -229,13 +266,181 @@ int main(void)
         drawPac(x, y, FALSE, c);
         pX = x;
         pY = y;
+
+        /**************************************
+        * GHOST 1
+        ***************************************/
+        Point prev_pac_point = {pX, pY};
+        // Draws the ghost
+        plot_pixel(x_1, y_1, 0xff00);
+       /**************************************
+        * ALL
+        ***************************************/
         not_first = true;
         wait_for_vsync(); 
     }
 }
 
-// Helper functions
+/*********************************************************************************************************************
+* HELPER FUNCTIONS
+**********************************************************************************************************************/
 
+/**************************************
+* GAME LOGIC
+***************************************/
+int setDir(int x, int y)
+{
+    switch (*(int *)KEY_BASE)
+        {
+        case 1:
+            if (canTurn(x, y, RIGHT)) return RIGHT;
+			return -1;
+            break;
+        case 2:
+            if (canTurn(x, y, LEFT)) return LEFT;
+			return -1;
+            break;
+        case 4:
+            if (canTurn(x, y, DOWN)) return DOWN;
+			return -1;
+            break;
+        case 8:
+            if (canTurn(x, y, UP)) return UP;
+			return -1;
+            break;
+        default:
+			return -1;;
+        }
+}
+
+Point getGrid(int x, int y)
+{
+    Point g;
+    g.x = floor((x - originX) / worldMapRatio);
+    g.y = floor((y - originY) / worldMapRatio);
+    return g;
+}
+
+bool canMove(Point head)
+{
+    return (*(short int *)(pixel_buffer_start + (head.y << 10) + (head.x << 1)) != BLUE);
+}
+
+bool canTurn(int x, int y, int dir)
+{
+    Point grid = getGrid(x, y);
+    int xRail = 39 + 5 + (grid.x * 11); // determining the proper turning coordinates
+    int yRail = 24 + 5 + (grid.y * 11);
+
+    switch (dir)
+    {
+    case RIGHT:
+        return (graph[grid.y][grid.x + 1] > 0) && (y == yRail);
+        break;
+    case LEFT:
+        return (graph[grid.y][grid.x - 1] > 0) && (y == yRail);
+        break;
+    case DOWN:
+        return (graph[grid.y + 1][grid.x] > 0) && (x == xRail);
+        break;
+    case UP:
+        return (graph[grid.y - 1][grid.x] > 0) && (x == xRail);
+        break;
+    default:
+        return false;
+    }
+}
+
+bool point_equal(const Point p1, const Point p2)
+{
+    return (p1.x == p2.x) && (p1.y == p2.y);
+}
+
+/**************************************
+* A* ALGORITHM
+***************************************/
+// Create new priority queue
+PriorityQueue* create_priority_queue()
+{
+    PriorityQueue *pq = (PriorityQueue*) malloc(sizeof(PriorityQueue));
+    pq->head = NULL;
+    pq->tail = NULL;
+    return pq;
+}
+
+// Function to check if the priority queue is empty
+bool is_empty(PriorityQueue *pq)
+{
+    return (pq->head == NULL);
+}
+
+// Function to insert a new key into the priority queue
+void push(PriorityQueue *pq, int grid_x, int grid_y, int f, int g, int h)
+{
+    Node *new_node = (Node*) malloc(sizeof(Node));
+    new_node->grid_x = grid_x;
+    new_node->grid_y = grid_y;
+    new_node->f = f;
+    new_node->g = g;
+    new_node->h = h;
+    new_node->next = NULL;
+    // pq currently empty
+    if (pq->head == NULL)
+    {
+        pq->head = new_node;
+        pq->tail = new_node;
+    }
+    // Insert to front
+    else if (f < pq->head->f)
+    {
+        new_node->next = pq->head;
+        pq->head = new_node;
+    }
+    else
+    {
+        Node *curr = pq->head;
+        while (curr->next != NULL && f > curr->next->f)
+        {
+            curr = curr->next;
+        }
+        new_node->next = curr->next;
+        curr->next = new_node;
+        if (new_node->next == NULL)
+        {
+            pq->tail = new_node;
+        }
+    }
+}
+
+// Function to remove and return the node with minimum f-value from the priority queue
+Node* pop(PriorityQueue *pq)
+{
+    if (is_empty(pq))
+    {
+        printf("Priority queue is empty!\n");
+        exit(1);
+    }
+    Node *temp = pq->head;
+    pq->head = pq->head->next;
+    temp->next = NULL;
+    return temp;
+}
+
+// Clear pq
+void clear_priority_queue(PriorityQueue* pq)
+{
+    while (pq->head != NULL)
+    {
+        Node* node = pq->head;
+        pq->head = node->next;
+        free(node);
+    }
+    free(pq);
+}
+
+/**************************************
+* DRAWING
+***************************************/
 void drawCoins() {
     for (int i=0; i<22; i++) {
         for (int j=0; j<19; j++) {
@@ -256,32 +461,6 @@ void clear_screen()
         {
             plot_pixel(x, y, 0);
         }
-    }
-}
-
-bool canTurn(int x, int y, int dir)
-{
-
-    struct point grid = getGrid(x, y);
-    int xRail = 39 + 5 + (grid.x * 11); // determining the proper turning coordinates
-    int yRail = 24 + 5 + (grid.y * 11);
-
-    switch (dir)
-    {
-    case RIGHT:
-        return (graph[grid.y][grid.x + 1] > 0) && (y == yRail);
-        break;
-    case LEFT:
-        return (graph[grid.y][grid.x - 1] > 0) && (y == yRail);
-        break;
-    case DOWN:
-        return (graph[grid.y + 1][grid.x] > 0) && (x == xRail);
-        break;
-    case UP:
-        return (graph[grid.y - 1][grid.x] > 0) && (x == xRail);
-        break;
-    default:
-        return false;
     }
 }
 
