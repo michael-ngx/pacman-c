@@ -54,10 +54,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define UP 0
+#define UP 3
 #define DOWN 1
-#define RIGHT 2
-#define LEFT 3
+#define RIGHT 0
+#define LEFT 2
 int dir = RIGHT;
 
 /*********************************************************************************************************************
@@ -84,6 +84,30 @@ int graph[ROW][COL] =  { // y, x
     {0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 0}, 
     {0, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0}, 
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  
+};
+
+int currRot = 0;
+int open [9][9] = {
+		{0, 0, 1, 1, 1, 1, 1, 0, 0},
+		{0, 1, 1, 1, 1, 1, 1, 1, 0},
+		{1, 1, 1, 0, 1, 1, 1, 0, 0},
+		{1, 1, 1, 1, 1, 0, 0, 0, 0},
+		{1, 1, 1, 0, 0, 0, 0, 0, 0},
+		{1, 1, 1, 1, 1, 0, 0, 0, 0},
+		{1, 1, 1, 1, 1, 1, 1, 0, 0},
+		{0, 1, 1, 1, 1, 1, 1, 1, 0},
+		{0, 0, 1, 1, 1, 1, 1, 0, 0},
+};
+int closed [9][9] = {
+        {0, 0, 1, 1, 1, 1, 1, 0, 0},
+        {0, 1, 1, 1, 1, 1, 1, 1, 0},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 1, 1, 1, 1, 0, 1, 1, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {0, 1, 1, 1, 1, 1, 1, 1, 0},
+        {0, 0, 1, 1, 1, 1, 1, 0, 0},
 };
 
 typedef struct Point
@@ -122,6 +146,7 @@ void drawMap();
 void drawPac(int x, int y, int clear, int c);
 void drawGhost(int x, int y, int clear, int c);
 void drawCoins();
+void rotatePac();
 
 /*********************************************************************************************************************
 * MAIN PROGRAM
@@ -272,6 +297,38 @@ int main(void)
 /*********************************************************************************************************************
 * HELPER FUNCTIONS
 **********************************************************************************************************************/
+
+void swap(int *x, int *y){
+    int temp = *x;
+    *x = *y;
+    *y= temp;
+}
+
+void rotatePac() {
+   for(int i=0; i<9; i++){
+     for(int j=i+1; j<9; j++)
+        swap(&open[i][j], &open[j][i]);
+    }
+
+   for(int i=0; i<9; i++){
+     for(int j=0; j<9/2; j++){
+        swap(&open[i][j], &open[i][9-j-1]);
+     }
+   }
+
+   for(int i=0; i<9; i++){
+     for(int j=i+1; j<9; j++)
+        swap(&closed[i][j], &closed[j][i]);
+    }
+
+   for(int i=0; i<9; i++){
+     for(int j=0; j<9/2; j++){
+        swap(&closed[i][j], &closed[i][9-j-1]);
+     }
+   }
+   currRot++;
+   if (currRot == 4) {currRot = 0;}
+}
 
 /**************************************
 * GAME LOGIC
@@ -505,155 +562,39 @@ void wait_for_vsync()
     }
 }
 
-void drawPacOpen(int x, int y, short int c1)
-{
-    plot_pixel(x + (-4), y - (-2), c1);
-    plot_pixel(x + (-4), y - (-1), c1);
-    plot_pixel(x + (-4), y - (0), c1);
-    plot_pixel(x + (-4), y - (1), c1);
-    plot_pixel(x + (-4), y - (2), c1);
-    plot_pixel(x + (-3), y - (-3), c1);
-    plot_pixel(x + (-3), y - (-2), c1);
-    plot_pixel(x + (-3), y - (-1), c1);
-    plot_pixel(x + (-3), y - (0), c1);
-    plot_pixel(x + (-3), y - (1), c1);
-    plot_pixel(x + (-3), y - (2), c1);
-    plot_pixel(x + (-3), y - (3), c1);
-    plot_pixel(x + (-2), y - (-4), c1);
-    plot_pixel(x + (-2), y - (-3), c1);
-    plot_pixel(x + (-2), y - (-2), c1);
-    plot_pixel(x + (-2), y - (-1), c1);
-    plot_pixel(x + (-2), y - (0), c1);
-    plot_pixel(x + (-2), y - (1), c1);
-    plot_pixel(x + (-2), y - (2), c1);
-    plot_pixel(x + (-2), y - (3), c1);
-    plot_pixel(x + (-2), y - (4), c1);
-    plot_pixel(x + (-1), y - (-4), c1);
-    plot_pixel(x + (-1), y - (-3), c1);
-    plot_pixel(x + (-1), y - (-2), c1);
-    plot_pixel(x + (-1), y - (-1), c1);
-    plot_pixel(x + (-1), y - (1), c1);
-    // plot_pixel(x + (-1), y - (2), c1); EYE
-    plot_pixel(x + (-1), y - (3), c1);
-    plot_pixel(x + (-1), y - (4), c1);
-    plot_pixel(x + (0), y - (-4), c1);
-    plot_pixel(x + (0), y - (-3), c1);
-    plot_pixel(x + (0), y - (-2), c1);
-    plot_pixel(x + (0), y - (-1), c1);
-    plot_pixel(x + (0), y - (1), c1);
-    plot_pixel(x + (0), y - (2), c1);
-    plot_pixel(x + (0), y - (3), c1);
-    plot_pixel(x + (0), y - (4), c1);
-    plot_pixel(x + (1), y - (-4), c1);
-    plot_pixel(x + (1), y - (-3), c1);
-    plot_pixel(x + (1), y - (-2), c1);
-    plot_pixel(x + (1), y - (2), c1);
-    plot_pixel(x + (1), y - (3), c1);
-    plot_pixel(x + (1), y - (4), c1);
-    plot_pixel(x + (2), y - (-4), c1);
-    plot_pixel(x + (2), y - (-3), c1);
-    plot_pixel(x + (2), y - (-2), c1);
-    plot_pixel(x + (2), y - (2), c1);
-    plot_pixel(x + (2), y - (3), c1);
-    plot_pixel(x + (2), y - (4), c1);
-    plot_pixel(x + (3), y - (-3), c1);
-    plot_pixel(x + (3), y - (3), c1);
+void drawPacOpen(int x, int y, short int c1) {
+    for (int i=0; i<9; i++) {
+        for (int j=0; j<9; j++) {
+            if (open[i][j] != 0) {
+                plot_pixel(j+x-4, i+y-4, c1);
+            } 
+        }
+    }
 }
 
 void drawPacClosed(int x, int y, short int c1)
 {
-    plot_pixel(x + (-4), y - (-2), c1);
-    plot_pixel(x + (-4), y - (-1), c1);
-    plot_pixel(x + (-4), y - (0), c1);
-    plot_pixel(x + (-4), y - (1), c1);
-    plot_pixel(x + (-4), y - (2), c1);
-    plot_pixel(x + (-3), y - (-3), c1);
-    plot_pixel(x + (-3), y - (-2), c1);
-    plot_pixel(x + (-3), y - (-1), c1);
-    plot_pixel(x + (-3), y - (0), c1);
-    plot_pixel(x + (-3), y - (1), c1);
-    plot_pixel(x + (-3), y - (2), c1);
-    plot_pixel(x + (-3), y - (3), c1);
-    plot_pixel(x + (-2), y - (-4), c1);
-    plot_pixel(x + (-2), y - (-3), c1);
-    plot_pixel(x + (-2), y - (-2), c1);
-    plot_pixel(x + (-2), y - (-1), c1);
-    plot_pixel(x + (-2), y - (0), c1);
-    plot_pixel(x + (-2), y - (1), c1);
-    plot_pixel(x + (-2), y - (2), c1);
-    plot_pixel(x + (-2), y - (3), c1);
-    plot_pixel(x + (-2), y - (4), c1);
-    plot_pixel(x + (-1), y - (-4), c1);
-    plot_pixel(x + (-1), y - (-3), c1);
-    plot_pixel(x + (-1), y - (-2), c1);
-    plot_pixel(x + (-1), y - (-1), c1);
-    plot_pixel(x + (-1), y - (0), c1);
-    plot_pixel(x + (-1), y - (1), c1);
-    plot_pixel(x + (-1), y - (2), c1);
-    plot_pixel(x + (-1), y - (3), c1);
-    plot_pixel(x + (-1), y - (4), c1);
-    plot_pixel(x + (0), y - (-4), c1);
-    plot_pixel(x + (0), y - (-3), c1);
-    plot_pixel(x + (0), y - (-2), c1);
-    plot_pixel(x + (0), y - (-1), c1);
-    plot_pixel(x + (0), y - (0), c1);
-    plot_pixel(x + (0), y - (1), c1);
-    plot_pixel(x + (0), y - (2), c1);
-    plot_pixel(x + (0), y - (3), c1);
-    plot_pixel(x + (0), y - (4), c1);
-    plot_pixel(x + (1), y - (-4), c1);
-    plot_pixel(x + (1), y - (-3), c1);
-    plot_pixel(x + (1), y - (-2), c1);
-    plot_pixel(x + (1), y - (-1), c1);
-    plot_pixel(x + (1), y - (0), c1);
-    // plot_pixel(x + (1), y - (1), c1); EYE
-    plot_pixel(x + (1), y - (2), c1);
-    plot_pixel(x + (1), y - (3), c1);
-    plot_pixel(x + (1), y - (4), c1);
-    plot_pixel(x + (2), y - (-4), c1);
-    plot_pixel(x + (2), y - (-3), c1);
-    plot_pixel(x + (2), y - (-2), c1);
-    plot_pixel(x + (2), y - (-1), c1);
-    plot_pixel(x + (2), y - (0), c1);
-    plot_pixel(x + (2), y - (1), c1);
-    plot_pixel(x + (2), y - (2), c1);
-    plot_pixel(x + (2), y - (3), c1);
-    plot_pixel(x + (2), y - (4), c1);
-    plot_pixel(x + (3), y - (-3), c1);
-    plot_pixel(x + (3), y - (-2), c1);
-    plot_pixel(x + (3), y - (-1), c1);
-    plot_pixel(x + (3), y - (0), c1);
-    plot_pixel(x + (3), y - (1), c1);
-    plot_pixel(x + (3), y - (2), c1);
-    plot_pixel(x + (3), y - (3), c1);
-    plot_pixel(x + (4), y - (-2), c1);
-    plot_pixel(x + (4), y - (-1), c1);
-    plot_pixel(x + (4), y - (0), c1);
-    plot_pixel(x + (4), y - (1), c1);
-    plot_pixel(x + (4), y - (2), c1);
+	for (int i=0; i<9; i++) {
+        for (int j=0; j<9; j++) {
+            if (closed[i][j] != 0) {
+                plot_pixel(j+x-4, i+y-4, c1);
+            } 
+        }
+    }
 }
 
 void drawPac(int x, int y, int clear, int c)
 {
+    while (currRot != dir) {
+        rotatePac();
+    }
     short int c1;
-    if (clear == 1)
-    {
-        c1 = BLACK;
-    }
-    else
-    {
-        c1 = 0xff20;
-    }
+    if (clear == 1) {c1 = BLACK; }
+    else {c1 = 0xff20; }
     bool face = ((c % 5) < 2);
 
-    if (face || clear == 1)
-    {
-        drawPacClosed(x, y, c1);
-    }
-    else
-    {
-        drawPacOpen(x, y, c1);
-    }
+    if (face || clear == 1) {drawPacClosed(x, y, c1); }
+    else {drawPacOpen(x, y, c1); }
 }
 
 void drawMap()

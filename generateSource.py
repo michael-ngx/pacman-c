@@ -39,28 +39,27 @@ def pacman():
 
         f.write(", ".join(pxs))
         f.write("},\n")
+    f.write("    }\n}\n")
+
+    with Image.open("images/pacClosed.png", "r") as im2:
+        px2 = im2.load()
+    f.write("void drawPacClosed(int x, int y, short int c1) {\n")
+    f.write("    int closed [9][9] = {\n")
+
+    c = 0
+    for i in range(9):
+        pxs = []
+        f.write("    {")
+        for j in range(9):
+            if (px2[j, i] != 0):
+                pxs.append("1")
+            else: 
+                pxs.append("0")
+
+        f.write(", ".join(pxs))
+        f.write("},\n")
     f.write("    }\n}")
     f.close()
-
-#     with Image.open("pacClosed.png", "r") as im2:
-#         px2 = im2.load()
-#     c = 0
-#     f.write("void drawPacClosed (int x, int y, short int c1) {\n")
-#     f.write("    int closed[68] = {")
-#     pxs = []
-#     for i in range(9):
-#         for j in range(9):
-#             if (px2[i, j] != 0):
-#                 pxs.append(f"((x+({i-4}) << 10) + (y-({j-4}) << 1))")
-#                 c+=1
-#                 # print(f"(x+({i-4}) << 10) + (y-({j-4}) << 1)")
-#     f.write(", ".join(pxs))
-#     f.write("\n    };\n")
-#     s = """    for (int n = 0; n < 68; n++) {
-#         *(short int *)(pixel_buffer_start + closed[n]) = c1;
-#     }\n"""
-#     f.write(s)
-#     f.write("}\n")
 #     s2 = """void drawPac(int x, int y, int clear, int c)
 # {
 #     short int c1;
