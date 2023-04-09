@@ -34,6 +34,10 @@
 #define RESOLUTION_X 320
 #define RESOLUTION_Y 240
 
+/* Grid size. */
+#define ROW 19
+#define COL 22
+
 /* Constants for animation */
 #define BOX_LEN 2
 #define NUM_BOXES 8
@@ -60,7 +64,7 @@ int dir = RIGHT;
 * GLOBAL VARIABLES
 **********************************************************************************************************************/
 volatile int pixel_buffer_start; 
-int graph[19][22] =  { // y, x
+int graph[ROW][COL] =  { // y, x
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
     {0, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0}, 
     {0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 0}, 
@@ -87,46 +91,27 @@ typedef struct Point
     int x, y;
 } Point;
 
+typedef struct Grid
+{
+    int row, col;
+} Grid;
+
 int originX = 39;
 int originY = 24;
 int worldMapRatio = 11;
 
 // Function declarations
 // Game Logic
-Point getGrid(int x, int y);
+Grid getGrid(int x, int y);
 int setDir(int x, int y);
 bool canMove(Point head);
 bool canTurn(int x, int y, int dir);
-Point getGrid(int x, int y);
-bool point_equal(const Point p1, const Point p2);
 
-// A* algorithm
-typedef struct Node
-{
-    int grid_x;
-    int grid_y;
-    int f;
-    int g;
-    int h;
-    // Parent node in find_path
-    struct Node* parent;
-    // Next node in pq (not related to path)
-    struct Node* next;
-} Node;
+// BFS algorithm
 
-typedef struct PriorityQueue
-{
-    Node *head;
-    Node *tail;
-    // Number of nodes added
-    int size;
-} PriorityQueue;
-
-PriorityQueue* create_priority_queue();
-void push(PriorityQueue *pq, int grid_x, int grid_y, int f, int g, int h);
-Node* pop(PriorityQueue* pq);
-bool is_empty(PriorityQueue* pq);
-void clear_priority_queue(PriorityQueue* pq);
+bool grid_equal(const Grid p1, const Grid p2);
+bool isValid(int row, int col);
+Grid* BFS (Grid start, Grid end);
 
 // Drawing
 void clear_screen();
@@ -137,14 +122,6 @@ void drawMap();
 void drawPac(int x, int y, int clear, int c);
 void drawGhost(int x, int y, int clear, int c);
 void drawCoins();
-
-
-// Return the closest_head point of the 4 points to the origin point
-// The point returned is guaranteed to avoid collision
-Point find_closest_head(Point start, Point dest)
-{
-
-}
 
 /*********************************************************************************************************************
 * MAIN PROGRAM
@@ -175,9 +152,9 @@ int main(void)
     ***************************************/
     int x_1 = 100;
     int y_1 = 72;
-    int pX_1;
-    int pY_1;
-    Point head_1;
+    // int pX_1;
+    // int pY_1;
+    // Point head_1;
 
     /**************************************
     * GAME DATA
@@ -187,7 +164,7 @@ int main(void)
     /* Before iteration */
     clear_screen();
     drawMap();
-    drawCoins();
+    // drawCoins();
     // drawPac(x, y, FALSE);
     wait_for_vsync();
 
@@ -202,9 +179,9 @@ int main(void)
 		int newDir = setDir(x, y);
         if (((*(int *)KEY_BASE) != 0) && (newDir != -1)) dir = newDir;
 
-        Point grid = getGrid(x, y);
-        if (graph[grid.y][grid.x] == 2) {
-            graph[grid.y][grid.x] = 1;
+        Grid grid = getGrid(x, y);
+        if (graph[grid.row][grid.col] == 2) {
+            graph[grid.row][grid.col] = 1;
             coins++;
             *(int *)LEDR_BASE = coins;
         }
@@ -270,9 +247,20 @@ int main(void)
         /**************************************
         * GHOST 1
         ***************************************/
-        Point prev_pac_point = {pX, pY};
+        Grid start = getGrid(x_1, y_1);
+        Grid dest = getGrid(pX, pY);
+        Grid* path = BFS(start, dest);
+
         // Draws the ghost
-        plot_pixel(x_1, y_1, 0xff00);
+        for (int i = 0; i < ROW * COL; i++)
+        {
+            if (path[i].row == -1 && path[i].col == -1) break;
+            int x = (path[i].col * worldMapRatio) + originX + 6;
+            int y = (path[i].row * worldMapRatio) + originY + 6;
+            plot_pixel(x, y, 0xff00);
+        }
+        free(path);
+        // plot_pixel(x_1, y_1, 0xff00);
        /**************************************
         * ALL
         ***************************************/
@@ -313,11 +301,11 @@ int setDir(int x, int y)
         }
 }
 
-Point getGrid(int x, int y)
+Grid getGrid(int x, int y)
 {
-    Point g;
-    g.x = floor((x - originX) / worldMapRatio);
-    g.y = floor((y - originY) / worldMapRatio);
+    Grid g;
+    g.col = floor((x - originX) / worldMapRatio);
+    g.row = floor((y - originY) / worldMapRatio);
     return g;
 }
 
@@ -328,122 +316,145 @@ bool canMove(Point head)
 
 bool canTurn(int x, int y, int dir)
 {
-    Point grid = getGrid(x, y);
-    int xRail = 39 + 5 + (grid.x * 11); // determining the proper turning coordinates
-    int yRail = 24 + 5 + (grid.y * 11);
+    Grid grid = getGrid(x, y);
+    int xRail = 39 + 5 + (grid.col * 11); // determining the proper turning coordinates
+    int yRail = 24 + 5 + (grid.row * 11);
 
     switch (dir)
     {
     case RIGHT:
-        return (graph[grid.y][grid.x + 1] > 0) && (y == yRail);
+        return (graph[grid.row][grid.col + 1] > 0) && (y == yRail);
         break;
     case LEFT:
-        return (graph[grid.y][grid.x - 1] > 0) && (y == yRail);
+        return (graph[grid.row][grid.col - 1] > 0) && (y == yRail);
         break;
     case DOWN:
-        return (graph[grid.y + 1][grid.x] > 0) && (x == xRail);
+        return (graph[grid.row + 1][grid.col] > 0) && (x == xRail);
         break;
     case UP:
-        return (graph[grid.y - 1][grid.x] > 0) && (x == xRail);
+        return (graph[grid.row - 1][grid.col] > 0) && (x == xRail);
         break;
     default:
         return false;
     }
 }
 
-bool point_equal(const Point p1, const Point p2)
-{
-    return (p1.x == p2.x) && (p1.y == p2.y);
-}
-
 /**************************************
-* A* ALGORITHM
+* BFS ALGORITHM
 ***************************************/
-// Create new priority queue
-PriorityQueue* create_priority_queue()
+bool grid_equal(const Grid p1, const Grid p2)
 {
-    PriorityQueue *pq = (PriorityQueue*) malloc(sizeof(PriorityQueue));
-    pq->head = NULL;
-    pq->tail = NULL;
-    return pq;
+    return (p1.row == p2.row) && (p1.col == p2.col);
 }
 
-// Function to check if the priority queue is empty
-bool is_empty(PriorityQueue *pq)
+// function to check if given row and column are within the bounds of the grid
+bool isValid(int row, int col)
 {
-    return (pq->head == NULL);
+    return (row >= 0) && (row < ROW) && (col >= 0) && (col < COL) && (graph[row][col] > 0);
 }
 
-// Function to insert a new key into the priority queue
-void push(PriorityQueue *pq, int grid_x, int grid_y, int f, int g, int h)
+// Return a vector of grids to be traversed from start to end
+Grid* BFS (Grid start, Grid dest)
 {
-    Node *new_node = (Node*) malloc(sizeof(Node));
-    new_node->grid_x = grid_x;
-    new_node->grid_y = grid_y;
-    new_node->f = f;
-    new_node->g = g;
-    new_node->h = h;
-    new_node->next = NULL;
-    // pq currently empty
-    if (pq->head == NULL)
-    {
-        pq->head = new_node;
-        pq->tail = new_node;
-    }
-    // Insert to front
-    else if (f < pq->head->f)
-    {
-        new_node->next = pq->head;
-        pq->head = new_node;
-    }
-    else
-    {
-        Node *curr = pq->head;
-        while (curr->next != NULL && f > curr->next->f)
-        {
-            curr = curr->next;
-        }
-        new_node->next = curr->next;
-        curr->next = new_node;
-        if (new_node->next == NULL)
-        {
-            pq->tail = new_node;
+    // Path to be returned
+    Grid* path = malloc(ROW * COL * sizeof(Grid));
+    // Queue for BFS (FIFO)
+    Grid queue [ROW * COL];
+    int front = 0;
+    int rear = 0;
+    queue[rear++] = start;
+    // Mark visited grids
+    bool visited [ROW][COL];
+    // Parent grid array of each grid
+    Grid parent [ROW][COL];
+
+    // Initialize visited, parent, and path (result) arrays
+    for (int i = 0; i < ROW; i++) {
+        for (int j = 0; j < COL; j++) {
+            visited[i][j] = false;
+            parent[i][j] = (Grid) {-1, -1};
         }
     }
+    for (int k = 0; k < ROW * COL; k++)
+    {
+        path[k] = (Grid) {-1, -1};
+    }
+
+    // Mark visited first grid
+    visited[start.row][start.col] = true;
+    parent[start.row][start.col] = start;
+
+    // BFS Loop
+    while (front < rear)
+    {
+        Grid curr = queue[front++];
+        int row = curr.row;
+        int col = curr.col;
+
+        if (grid_equal(curr, dest))
+        {
+            // Trace path
+            int top = -1;
+            int row_track = dest.row;
+            int col_track = dest.col;
+                    
+            // Backtrack from the destination to the source using the parent array
+            while (!(parent[row_track][col_track].row == row_track && parent[row_track][col_track].col == col_track)) {
+                path[++top] = parent[row_track][col_track];
+                int row_temp = row_track;
+                row_track = parent[row_track][col_track].row;
+                col_track = parent[row_temp][col_track].col;
+            }
+            // Add the source cell to the path
+            path[++top] = parent[row_track][col_track];
+            return path;
+        }
+
+        // Visit all neighbor grids if neighbor is within grid and not visited
+        // Up neighbor
+        if (isValid(row - 1, col) && !visited[row - 1][col])
+        {
+            visited[row - 1][col] = true;
+            parent[row - 1][col] = curr;
+            queue[rear++] = (Grid) {row - 1, col};
+        }
+
+        // Down neighbor
+        if (isValid(row + 1, col) && !visited[row + 1][col])
+        {
+            visited[row + 1][col] = true;
+            parent[row + 1][col] = curr;
+            queue[rear++] = (Grid) {row + 1, col};
+        }
+
+        // Left neighbor
+        if (isValid(row, col - 1) && !visited[row][col - 1])
+        {
+            visited[row][col - 1] = true;
+            parent[row][col - 1] = curr;
+            queue[rear++] = (Grid) {row, col - 1};
+        }
+
+        // Right neighbor
+        if (isValid(row, col + 1) && !visited[row][col + 1])
+        {
+            visited[row][col + 1] = true;
+            parent[row][col + 1] = curr;
+            queue[rear++] = (Grid) {row, col + 1};
+        }
+    }
+
+    // ??? case - no path is found
+    return path;
 }
 
-// Function to remove and return the node with minimum f-value from the priority queue
-Node* pop(PriorityQueue *pq)
-{
-    if (is_empty(pq))
-    {
-        printf("Priority queue is empty!\n");
-        exit(1);
-    }
-    Node *temp = pq->head;
-    pq->head = pq->head->next;
-    temp->next = NULL;
-    return temp;
-}
-
-// Clear pq
-void clear_priority_queue(PriorityQueue* pq)
-{
-    while (pq->head != NULL)
-    {
-        Node* node = pq->head;
-        pq->head = node->next;
-        free(node);
-    }
-    free(pq);
-}
 
 /**************************************
 * DRAWING
 ***************************************/
 void drawCoins() {
-    for (int i=0; i<22; i++) {
-        for (int j=0; j<19; j++) {
+    for (int i=0; i<COL; i++) {
+        for (int j=0; j<ROW; j++) {
             if (graph[j][i] == 2) {
                 int x = (i*worldMapRatio) + originX + 6;
                 int y = (j*worldMapRatio) + originY + 6;
