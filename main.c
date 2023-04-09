@@ -124,6 +124,7 @@ int originX = 39;
 int originY = 24;
 int worldMapRatio = 11;
 
+int scoreValue = 0;
 // Function declarations
 // Game Logic
 Grid getGrid(int x, int y);
@@ -147,6 +148,8 @@ void drawPac(int x, int y, int clear, int c);
 void drawGhost(int x, int y, int clear, int c);
 void drawCoins();
 void rotatePac();
+void video_text(int x, int y, char * text_ptr);
+void changeScore(int score);
 
 /*********************************************************************************************************************
 * MAIN PROGRAM
@@ -160,8 +163,10 @@ int main(void)
     /*************************************
     * PLAYER DATA
     **************************************/
-    // Coins collected
-    int coins = 0;
+    // Score
+	char clear[10] = "       \0";
+    char scoreLabel[8] = "SCORE: \0";
+	char score[10] = "0\0";
     // Current player location, in pixels
     int x = 149;
     int y = 183;
@@ -189,7 +194,11 @@ int main(void)
     /* Before iteration */
     clear_screen();
     drawMap();
-    // drawCoins();
+	video_text(36, 10, clear);
+	video_text(43, 10, clear);
+    video_text(36, 10, scoreLabel);
+	video_text(43, 10, score);
+    drawCoins();
     // drawPac(x, y, FALSE);
     wait_for_vsync();
 
@@ -207,8 +216,7 @@ int main(void)
         Grid grid = getGrid(x, y);
         if (graph[grid.row][grid.col] == 2) {
             graph[grid.row][grid.col] = 1;
-            coins++;
-            *(int *)LEDR_BASE = coins;
+            changeScore(10);
         }
         
         // Number of pixels to be incremented if moved in chosen direction
@@ -356,6 +364,15 @@ int setDir(int x, int y)
         default:
 			return -1;;
         }
+}
+
+void changeScore (int score) {
+    char clear[10] = "0\0";
+    video_text(43, 10, clear);
+    scoreValue += 10;
+    char s[10];
+    sprintf(s, "%d", scoreValue);
+    video_text(43, 10, s);
 }
 
 Grid getGrid(int x, int y)
@@ -509,6 +526,18 @@ Grid* BFS (Grid start, Grid dest)
 /**************************************
 * DRAWING
 ***************************************/
+void video_text(int x, int y, char * text_ptr) {
+    int offset;
+    volatile char * character_buffer = (char *)FPGA_CHAR_BASE; // video character buffer
+    offset = (y << 7) + x;
+    while (*(text_ptr)) {
+        *(character_buffer + offset) =
+        *(text_ptr); // write to the character buffer
+        ++text_ptr;
+        ++offset;
+    }
+}
+
 void drawCoins() {
     for (int i=0; i<COL; i++) {
         for (int j=0; j<ROW; j++) {
