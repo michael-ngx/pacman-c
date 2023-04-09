@@ -10,4 +10,11 @@ void drawPacOpen(int x, int y, short int c1) {
     {0, 1, 1, 1, 1, 1, 1, 1, 0},
     {0, 0, 1, 1, 1, 1, 1, 0, 0},
     }
+    for (int i=0; i<9; i++) {
+        for (int j=0; j<9; j++) {
+            if (open[i][j] != 0) {
+                plot_pixel(x-4+i, j-4+i, YELLOW);
+            } 
+        }
+    }
 }
