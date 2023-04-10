@@ -84,7 +84,6 @@ def pacman():
 # }"""
 #     f.write(s2)
 #     f.close()
-pacman()
 
 def graph():
     with Image.open("images/smallMap.png", "r") as im:
@@ -115,3 +114,28 @@ def graph():
             f.write(str(px[i, j]) + (", " if (i != 21) else ""))
         f.write("}" + (", \n" if (j != 18) else "\n"))
     f.write("};")
+
+def ghost():
+    with Image.open("images/pinkGhost.png", "r") as im:
+        px = im.load()
+    
+    f = open("py Generated Source/drawPink.c", "w")
+    f.write("void drawPink(int x, int y, short int c1) {\n")
+    f.write("    int pink [9][9] = {\n")
+
+    c = 0
+    for i in range(9):
+        pxs = []
+        f.write("    {")
+        for j in range(9):
+            if (px[j, i] != 0):
+                pxs.append(str(px[j, i]))
+            else: 
+                pxs.append("0")
+
+        f.write(", ".join(pxs))
+        f.write("},\n")
+    f.write("    }\n}\n")
+    f.close()
+
+ghost()
