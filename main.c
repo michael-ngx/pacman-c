@@ -43,7 +43,7 @@
 #define NUM_BOXES 8
 #define SPEED 1
 #define PLAYER_RADIUS 5
-#define MOUTH_SPEED 10 // CHANGE THIS BASED ON CLOCK SPEED
+#define MOUTH_SPEED 5 // CHANGE THIS BASED ON CLOCK SPEED
 #define SPEED_G 1                                         
 #define GHOST_RADIUS 5          
 
@@ -66,14 +66,14 @@ int dir = RIGHT;
 volatile int pixel_buffer_start; 
 int graph[ROW][COL] =  { // y, x
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
-    {0, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0}, 
+    {0, 3, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 3, 0}, 
     {0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 0}, 
     {0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 0}, 
     {0, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0}, 
     {0, 2, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0}, 
     {0, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 0, 0, 2, 0}, 
     {0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 0, 0, 2, 0, 2, 0, 2, 0, 0, 2, 0}, 
-    {0, 2, 2, 2, 0, 2, 2, 2, 0, 2, 0, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 0}, 
+    {0, 2, 2, 2, 0, 2, 2, 2, 0, 2, 0, 3, 0, 2, 2, 2, 0, 2, 2, 2, 2, 0}, 
     {0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 0, 0, 2, 0, 0, 0, 0}, 
     {0, 2, 2, 2, 0, 2, 2, 2, 0, 2, 0, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 0}, 
     {0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 0, 0, 2, 0, 2, 0, 2, 0, 0, 2, 0}, 
@@ -82,7 +82,7 @@ int graph[ROW][COL] =  { // y, x
     {0, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0}, 
     {0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 0}, 
     {0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 0}, 
-    {0, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0}, 
+    {0, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 3, 0}, 
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  
 };
 
@@ -110,6 +110,30 @@ int closed [9][9] = {
         {0, 0, 1, 1, 1, 1, 1, 0, 0},
 };
 
+int ghost [9][9] = {
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 3, 3, 3, 3, 3, 0, 0},
+        {0, 3, 3, 5, 3, 3, 5, 3, 0},
+        {0, 3, 5, 5, 1, 5, 5, 1, 0},
+        {0, 3, 4, 5, 2, 4, 5, 2, 0},
+        {0, 3, 3, 3, 3, 3, 3, 3, 0},
+        {0, 3, 3, 3, 3, 3, 3, 3, 0},
+        {0, 3, 3, 3, 0, 3, 3, 3, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+};
+
+int cherry [9][9] = {
+        {0, 0, 0, 0, 0, 0, 0, 1, 1},
+        {0, 0, 0, 0, 0, 0, 1, 1, 1},
+        {0, 0, 0, 1, 0, 0, 0, 0, 0},
+        {0, 2, 2, 0, 0, 0, 1, 0, 0},
+        {2, 2, 2, 2, 0, 0, 1, 0, 0},
+        {2, 2, 2, 2, 0, 2, 1, 0, 0},
+        {0, 2, 2, 0, 2, 2, 2, 2, 0},
+        {0, 0, 0, 0, 2, 3, 2, 2, 0},
+        {0, 0, 0, 0, 0, 2, 2, 0, 0},
+};
+
 typedef struct Point
 {
     int x, y;
@@ -125,7 +149,11 @@ int originY = 24;
 int worldMapRatio = 11;
 
 int scoreValue = 0;
-// Function declarations
+bool power_mode = false;
+
+/*********************************************************************************************************************
+* FUNCTION DECLARATIONS
+**********************************************************************************************************************/
 // Game Logic
 Grid getGrid(int x, int y);
 int setDir(int x, int y);
@@ -133,10 +161,11 @@ bool canMove(Point head);
 bool canTurn(int x, int y, int dir);
 
 // BFS algorithm
-
 bool grid_equal(const Grid p1, const Grid p2);
 bool isValid(int row, int col);
 Grid* BFS (Grid start, Grid end);
+Point* getPixelPath (Grid* path_grid, int ghost_number);
+int count_pixel_path[] = {0, 0, 0};
 
 // Drawing
 void clear_screen();
@@ -145,8 +174,9 @@ void wait_for_vsync();
 void draw_box(int x, int y, short int col);
 void drawMap();
 void drawPac(int x, int y, int clear, int c);
-void drawGhost(int x, int y, int clear, int c);
-void drawCoins();
+void drawGhost (int x, int y, bool clear, int ghost_number);
+void drawCollectibles();
+void draw_powerups(int x, int y, bool clear);
 void rotatePac();
 void video_text(int x, int y, char * text_ptr);
 void changeScore(int score);
@@ -159,7 +189,7 @@ int main(void)
     volatile int *pixel_ctrl_ptr = (int *)0xFF203020;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
-    
+
     /*************************************
     * PLAYER DATA
     **************************************/
@@ -180,17 +210,22 @@ int main(void)
     /**************************************
     * GHOST DATA
     ***************************************/
-    int x_1 = 100;
-    int y_1 = 72;
-    // int pX_1;
-    // int pY_1;
-    // Point head_1;
+    bool not_first_ghost[] = {false, false, false};
+    bool exist[] = {true, true, true};
+    int x_ghost[] = {99, 55, 264};
+    int y_ghost[] = {50, 182, 39};
+    
+    Grid* path_grid[3];
+    Point* path_pixel[3];
 
     /**************************************
     * GAME DATA
     ***************************************/
     // Boolean to check for first drawing
-    bool not_first = false;
+    bool not_first = false; 
+    // Timer for power mode (Changed based on clock speed)
+    int power_timer = 0;
+
     /* Before iteration */
     clear_screen();
     drawMap();
@@ -198,8 +233,7 @@ int main(void)
 	video_text(43, 10, clear);
     video_text(36, 10, scoreLabel);
 	video_text(43, 10, score);
-    drawCoins();
-    // drawPac(x, y, FALSE);
+    drawCollectibles();
     wait_for_vsync();
 
     /*******************************************************************************
@@ -217,6 +251,33 @@ int main(void)
         if (graph[grid.row][grid.col] == 2) {
             graph[grid.row][grid.col] = 1;
             changeScore(10);
+        } else if (graph[grid.row][grid.col] == 3)
+        {
+            graph[grid.row][grid.col] = 1;
+            // Clear powerups from the map
+            int x = (grid.col * worldMapRatio) + originX + 6;
+            int y = (grid.row * worldMapRatio) + originY + 6;
+            draw_powerups(x, y, true);
+            // Change mode
+            changeScore(10);
+            power_mode = true;
+            power_timer = 200;
+            // Change behavior of ghost
+            for (int i = 0; i < 3; i++)
+            {
+                count_pixel_path[i] = 0;
+                drawGhost(x_ghost[i], y_ghost[i], true, i);
+            }
+        }
+        // Countdown
+        if (power_mode)
+        {
+            power_timer--;
+            if (power_timer <= 0)
+            {
+                power_timer = 0;
+                power_mode = false;
+            }
         }
         
         // Number of pixels to be incremented if moved in chosen direction
@@ -276,29 +337,113 @@ int main(void)
         drawPac(x, y, FALSE, c);
         pX = x;
         pY = y;
+        not_first = true;
 
         /**************************************
-        * GHOST 1
+        * GHOSTS
         ***************************************/
-        Grid start = getGrid(x_1, y_1);
-        Grid dest = getGrid(pX, pY);
-        Grid* path = BFS(start, dest);
-
-        // Draws the ghost
-        for (int i = 0; i < ROW * COL; i++)
+        bool reset_path[] = {false, false, false};
+        for (int i = 0; i < 3; i++)
         {
-            if (path[i].row == -1 && path[i].col == -1) break;
-            int x = (path[i].col * worldMapRatio) + originX + 6;
-            int y = (path[i].row * worldMapRatio) + originY + 6;
-            plot_pixel(x, y, 0xff00);
+            // Skips if ghost has been eaten
+            if (!exist[i])
+            {
+                continue;
+            }
+            // Init first path for ghost/Ghost finished tracking previous path
+            if (count_pixel_path[i] <= 0)
+            {
+                // Block not executed first time (no path has been created yet)
+                if (not_first_ghost[i])
+                {
+                    free(path_grid[i]);
+                    free(path_pixel[i]);
+                }
+                not_first_ghost[i] = true;
+                reset_path[i] = true;
+                Grid start = getGrid(x_ghost[i], y_ghost[i]);
+                Grid dest;
+                if (!power_mode)
+                {
+                    dest = getGrid(pX, pY);
+                } else {
+                    if (i == 0) dest = (Grid) {2, 5};
+                    else if (i == 1) dest = (Grid) {9, 11};
+                    else dest = (Grid) {14, 3};
+                }
+                path_grid[i] = BFS(start, dest);
+                path_pixel[i] = getPixelPath(path_grid[i], i);
+            }
+
+            // Only clear previous location when not reseting
+            if (!reset_path[i])
+            {
+                if (!power_mode)
+                {
+                    drawGhost(path_pixel[i][count_pixel_path[i] + 1].x, path_pixel[i][count_pixel_path[i] + 1].y, true, i);
+                } else
+                {
+                    if (power_timer % 2 == 0)
+                    {
+                        drawGhost(path_pixel[i][count_pixel_path[i]].x, path_pixel[i][count_pixel_path[i]].y, true, i);
+                    } else
+                    {
+                        drawGhost(path_pixel[i][count_pixel_path[i] + 1].x, path_pixel[i][count_pixel_path[i] + 1].y, true, i);
+                    }
+                }
+            }
+            // Let ghost travel on path_pixel
+            drawGhost(path_pixel[i][count_pixel_path[i]].x, path_pixel[i][count_pixel_path[i]].y, false, i);
+            // In power mode, ghost runs away with half the speed
+            if (power_timer % 2 == 0)
+            {
+                count_pixel_path[i]--;
+            }
+            // When ghost reaches the destination
+            if (count_pixel_path[i] < 0)
+            {
+                count_pixel_path[i] = 0;
+            }
+            x_ghost[i] = path_pixel[i][count_pixel_path[i]].x;
+            y_ghost[i] = path_pixel[i][count_pixel_path[i]].y;
+            // Pacman contact with ghost
+            if (abs(x - x_ghost[i]) <= PLAYER_RADIUS && abs(y - y_ghost[i]) <= PLAYER_RADIUS)
+            {
+                if (!power_mode)
+                {
+                    printf("YOU LOSE");
+                    return 0;
+                } else
+                {
+                    exist[i] = false;
+                    drawGhost(x_ghost[i], y_ghost[i], true, i);
+                    changeScore(100);
+                }
+            }
         }
-        free(path);
-        // plot_pixel(x_1, y_1, 0xff00);
-       /**************************************
-        * ALL
+        
+        /**************************************
+        * ALL OBJECTS
         ***************************************/
-        not_first = true;
-        wait_for_vsync(); 
+        drawCollectibles();
+        wait_for_vsync();
+        
+        /**************************************
+        * WINNING/LOSING CONDITION
+        ***************************************/
+        // Ate everything
+        if (scoreValue == (187*10 + 300))
+        {
+            printf("YOU WIN");
+            return 0;
+        }
+        // Ate all power-ups but cannot eat all ghosts
+        if (graph[1][1] == 1 && graph[1][20] == 1 && graph[8][11] == 1 && graph[17][20] == 1
+            && power_mode == false && (exist[0] || exist[1] || exist[2]))
+        {
+            printf("NO MORE POWERUPS\nYOU LOSE");
+            return 0;
+        }
     }
 }
 
@@ -369,7 +514,7 @@ int setDir(int x, int y)
 void changeScore (int score) {
     char clear[10] = "0\0";
     video_text(43, 10, clear);
-    scoreValue += 10;
+    scoreValue += score;
     char s[10];
     sprintf(s, "%d", scoreValue);
     video_text(43, 10, s);
@@ -465,13 +610,15 @@ Grid* BFS (Grid start, Grid dest)
         int row = curr.row;
         int col = curr.col;
 
+        // Found path
         if (grid_equal(curr, dest))
         {
             // Trace path
             int top = -1;
             int row_track = dest.row;
             int col_track = dest.col;
-                    
+            // Add the destination cell to the path
+            path[++top] = dest;
             // Backtrack from the destination to the source using the parent array
             while (!(parent[row_track][col_track].row == row_track && parent[row_track][col_track].col == col_track)) {
                 path[++top] = parent[row_track][col_track];
@@ -480,7 +627,7 @@ Grid* BFS (Grid start, Grid dest)
                 col_track = parent[row_temp][col_track].col;
             }
             // Add the source cell to the path
-            path[++top] = parent[row_track][col_track];
+            path[++top] = start;
             return path;
         }
 
@@ -522,11 +669,73 @@ Grid* BFS (Grid start, Grid dest)
     return path;
 }
 
+Point* getPixelPath (Grid* path_grid, int ghost_number)
+{
+    // Path to be returned
+    Point* path_pixel = malloc(ROW * COL * worldMapRatio * sizeof(Point));
+    // Initialize return path
+    for (int i = 0; i < ROW * COL * worldMapRatio; i++)
+    {
+        path_pixel[i] = (Point) {-1, -1};
+    }
+    count_pixel_path[ghost_number] = 0;
+    for (int grid = 0; grid < ROW * COL - 1; grid++)
+    {
+        if (path_grid[grid + 1].row == -1 && path_grid[grid + 1].col == -1) 
+        {
+            int x = (path_grid[grid].col * worldMapRatio) + originX + 6;
+            int y = (path_grid[grid].row * worldMapRatio) + originY + 6;
+            path_pixel[count_pixel_path[ghost_number]] = (Point) {x, y};
+            break;
+        }
+        // xy of grid mid point
+        int curr_x = (path_grid[grid].col * worldMapRatio) + originX + 6;
+        int curr_y = (path_grid[grid].row * worldMapRatio) + originY + 6;
+        int next_x = (path_grid[grid + 1].col * worldMapRatio) + originX + 6;
+        int next_y = (path_grid[grid + 1].row * worldMapRatio) + originY + 6;
+        
+        if (next_x > curr_x)
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                int x = (path_grid[grid].col * worldMapRatio) + originX + 6 + i;
+                int y = (path_grid[grid].row * worldMapRatio) + originY + 6;
+                path_pixel[count_pixel_path[ghost_number]++] = (Point) {x, y};
+            }
+        } else if (next_x < curr_x)
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                int x = (path_grid[grid].col * worldMapRatio) + originX + 6 - i;
+                int y = (path_grid[grid].row * worldMapRatio) + originY + 6;
+                path_pixel[count_pixel_path[ghost_number]++] = (Point) {x, y};
+            }
+        } else if (next_y < curr_y)
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                int x = (path_grid[grid].col * worldMapRatio) + originX + 6;
+                int y = (path_grid[grid].row * worldMapRatio) + originY + 6 - i;
+                path_pixel[count_pixel_path[ghost_number]++] = (Point) {x, y};
+            }
+        } else if (next_y > curr_y)
+        {
+            for (int i = 0; i < 11; i++)
+            {
+                int x = (path_grid[grid].col * worldMapRatio) + originX + 6;
+                int y = (path_grid[grid].row * worldMapRatio) + originY + 6 + i;
+                path_pixel[count_pixel_path[ghost_number]++] = (Point) {x, y};
+            }
+        }
+    }
+    return path_pixel;
+}
 
 /**************************************
 * DRAWING
 ***************************************/
-void video_text(int x, int y, char * text_ptr) {
+void video_text(int x, int y, char * text_ptr)
+{
     int offset;
     volatile char * character_buffer = (char *)FPGA_CHAR_BASE; // video character buffer
     offset = (y << 7) + x;
@@ -538,25 +747,20 @@ void video_text(int x, int y, char * text_ptr) {
     }
 }
 
-void drawCoins() {
-    for (int i=0; i<COL; i++) {
-        for (int j=0; j<ROW; j++) {
-            if (graph[j][i] == 2) {
-                int x = (i*worldMapRatio) + originX + 6;
-                int y = (j*worldMapRatio) + originY + 6;
-                draw_box(x, y, ORANGE);
-            }
-        }
-    }
-}
-
-void clear_screen()
+void drawCollectibles()
 {
-    for (int x = 0; x < RESOLUTION_X; x++)
-    {
-        for (int y = 0; y < RESOLUTION_Y; y++)
-        {
-            plot_pixel(x, y, 0);
+    for (int i = 0; i < COL; i++) {
+        for (int j = 0; j < ROW; j++) {
+            if (graph[j][i] == 2) {
+                int x = (i * worldMapRatio) + originX + 6;
+                int y = (j * worldMapRatio) + originY + 6;
+                draw_box(x, y, ORANGE);
+            } else if (graph[j][i] == 3)
+            {
+                int x = (i * worldMapRatio) + originX + 6;
+                int y = (j * worldMapRatio) + originY + 6;
+                draw_powerups(x, y, false);
+            }
         }
     }
 }
@@ -572,9 +776,43 @@ void draw_box(int x, int y, short int col)
     }
 }
 
+void draw_powerups(int x, int y, bool clear)
+{
+    short int c1;
+    for (int i=0; i<9; i++) {
+        for (int j=0; j<9; j++) {
+            if (!clear)
+            {
+                if (cherry[i][j] != 0){
+                    switch (cherry[i][j]) {
+                        case 1: c1 = ORANGE; break;
+                        case 2: c1 = RED; break;
+                        case 3: c1 = WHITE; break;
+                        default: c1 = BLACK;
+                    }
+                    plot_pixel(j+x-4, i+y-4, c1);
+                }
+            } else {
+                plot_pixel(j+x-4, i+y-4, BLACK);
+            }
+        }
+    }
+}
+
 void plot_pixel(int x, int y, short int line_color)
 {
     *(short int *)(pixel_buffer_start + (y << 10) + (x << 1)) = line_color;
+}
+
+void clear_screen()
+{
+    for (int x = 0; x < RESOLUTION_X; x++)
+    {
+        for (int y = 0; y < RESOLUTION_Y; y++)
+        {
+            plot_pixel(x, y, 0);
+        }
+    }
 }
 
 void wait_for_vsync()
@@ -620,10 +858,42 @@ void drawPac(int x, int y, int clear, int c)
     short int c1;
     if (clear == 1) {c1 = BLACK; }
     else {c1 = 0xff20; }
-    bool face = ((c % 5) < 2);
+    bool face = ((c % MOUTH_SPEED) < 2);
 
     if (face || clear == 1) {drawPacClosed(x, y, c1); }
     else {drawPacOpen(x, y, c1); }
+}
+
+void drawGhost (int x, int y, bool clear, int ghost_number)
+{
+    short int c1;
+    for (int i=0; i<9; i++) {
+        for (int j=0; j<9; j++) {
+            if (!clear)
+            {
+                if (ghost[i][j] != 0){
+                    switch (ghost[i][j]) {
+                        case 1: c1 = BLACK; break;
+                        case 2: c1 = MAGENTA; break;
+                        case 3: if (power_mode) c1 = WHITE;
+                                else {
+                                    if (ghost_number == 0) c1 = RED; 
+                                    else if (ghost_number == 1) c1 = CYAN; 
+                                    else c1 = YELLOW; 
+                                }
+                                break;
+                        case 4: c1 = PINK; break;
+                        case 5: c1 = WHITE; break;
+                        default: c1 = BLACK;
+                    }
+                    plot_pixel(j+x-4, i+y-4, c1);
+                }
+            } else
+            {
+                plot_pixel(j+x-4, i+y-4, BLACK);
+            }
+        }
+    }
 }
 
 void drawMap()
